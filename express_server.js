@@ -74,5 +74,6 @@ app.post("/urls", (req, res) => {
   // Add the new URL entry to the database
   urlDatabase[shortURL] = longURL;
 
-  res.redirect("/urls");
+  //res.redirect("/urls/:id");
+  res.redirect(`/urls/${shortURL}`);
 });
