@@ -5,6 +5,7 @@ const PORT = 8080; // default port
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
+//Creates our short URL string
 const generateRandomString = (length) => {
   let result = "";
   const characters =
@@ -19,6 +20,7 @@ const generateRandomString = (length) => {
 const randomString = generateRandomString(6);
 console.log(randomString);
 
+//Our database of links
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
@@ -45,16 +47,6 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-/* app.post("/urls", (req, res) => {
-  const longURL = req.body.longURL;
-  const shortURL = generateRandomString(6);
-
-  // Add the new URL entry to the database
-  urlDatabase[shortURL] = longURL;
-
-  res.redirect("/urls");
-}); */
-
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
@@ -62,7 +54,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],/* What goes here? */
+    longURL: urlDatabase[req.params.id] /* What goes here? */,
   };
   res.render("urls_show", templateVars);
 });
@@ -74,6 +66,13 @@ app.post("/urls", (req, res) => {
   // Add the new URL entry to the database
   urlDatabase[shortURL] = longURL;
 
-  //res.redirect("/urls/:id");
+  //redirect after form submission
   res.redirect(`/urls/${shortURL}`);
+});
+
+//Redirect Short URLs
+app.get("/u/:id", (req, res) => {
+  const shortURL = req.params.id;
+  const longURL = urlDatabase[shortURL];
+  res.redirect(longURL);
 });
