@@ -3,6 +3,21 @@ const app = express();
 const PORT = 8080; // default port
 
 app.set("view engine", "ejs");
+app.use(express.urlencoded({ extended: true }));
+
+const generateRandomString = (length) => {
+  let result = "";
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+};
+
+// Using the function to generate a random string of length 6
+const randomString = generateRandomString(6);
+console.log(randomString);
 
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
@@ -26,15 +41,38 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = {urls: urlDatabase };
+  const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
+
+/* app.post("/urls", (req, res) => {
+  const longURL = req.body.longURL;
+  const shortURL = generateRandomString(6);
+
+  // Add the new URL entry to the database
+  urlDatabase[shortURL] = longURL;
+
+  res.redirect("/urls");
+}); */
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: req.params.longURL/* What goes here? */ };
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],/* What goes here? */
+  };
   res.render("urls_show", templateVars);
+});
+
+app.post("/urls", (req, res) => {
+  const longURL = req.body.longURL;
+  const shortURL = generateRandomString(6);
+
+  // Add the new URL entry to the database
+  urlDatabase[shortURL] = longURL;
+
+  res.redirect("/urls");
 });
