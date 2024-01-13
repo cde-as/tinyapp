@@ -15,7 +15,6 @@ const generateRandomString = (length) => {
   }
   return result;
 };
-
 // Using the function to generate a random string of length 6
 const randomString = generateRandomString(6);
 console.log(randomString);
@@ -26,9 +25,9 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
-app.get("/", (req, res) => {
+/* app.get("/", (req, res) => {
   res.send("Hello!");
-});
+}); */
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -38,9 +37,9 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
+/* app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+}); */
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -54,7 +53,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id] /* What goes here? */,
+    longURL: urlDatabase[req.params.id],
   };
   res.render("urls_show", templateVars);
 });
@@ -79,4 +78,16 @@ app.get("/u/:id", (req, res) => {
   } else {
     res.status(404).send("URL not found"); // Handle the case where the short URL is not in the database
   }
+});
+
+app.post("/urls/:id/delete", (req, res) => {
+  const shortURL = req.params.id;
+  
+  if (urlDatabase[shortURL]) {
+    delete urlDatabase[shortURL];
+    res.redirect(`/urls`);
+  } else {
+    res.status(404).send("URL not found");
+  }
+ 
 });
