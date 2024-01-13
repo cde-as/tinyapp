@@ -80,12 +80,27 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
+//Delete URLs using delete button
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
   
   if (urlDatabase[shortURL]) {
     delete urlDatabase[shortURL];
     res.redirect(`/urls`);
+  } else {
+    res.status(404).send("URL not found");
+  }
+});
+
+//Edit URLs using edit button
+app.post("/urls/:id/edit", (req, res) => {
+  const shortURL = req.params.id;
+  const newLongURL = req.body.newLongURL;
+  
+  if (urlDatabase[shortURL]) {
+    //Update the long URL in the database
+    urlDatabase[shortURL] = newLongURL;
+    res.redirect(`/urls/${shortURL}`);
   } else {
     res.status(404).send("URL not found");
   }
