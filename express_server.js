@@ -104,5 +104,12 @@ app.post("/urls/:id/edit", (req, res) => {
   } else {
     res.status(404).send("URL not found");
   }
- 
+});
+
+app.get("/urls/:id/edit", (req, res) => {
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+  };
+  res.render("urls_show", templateVars);
 });
