@@ -129,6 +129,6 @@ app.post("/login", (req, res) => {
   res.cookie("username", username);
   console.log("Cookie set:", req.cookies);
 
-  //redirect to /urls page
+  //redirect to /urls page.
   res.redirect("/urls");
 });
