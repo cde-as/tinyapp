@@ -135,3 +135,8 @@ app.post("/login", (req, res) => {
   //redirect to /urls page.
   res.redirect("/urls");
 });
+
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
+  res.redirect("/urls");
+});
