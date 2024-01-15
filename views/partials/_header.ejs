@@ -22,11 +22,12 @@
 
       <div class="navbar-nav ms-auto">
         <!-- The Login Form -->
+        
         <form class="d-flex" action="/login" method="post" role="search">
           <input class="form-control me-2" type="search" placeholder="Username" aria-label="username" name="username">
           <button class="btn btn-outline-light my-2 my-sm-0" type="submit">Login</button>
         </form>
-
+        <h2>You are logged in as <%= username %></h2>
       </div>
     </div>
   </nav>
