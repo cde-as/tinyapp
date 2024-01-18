@@ -22,15 +22,11 @@ const generateRandomString = (length) => {
 const randomString = generateRandomString(6);
 console.log(randomString);
 
-//Our database of links
+// Our database of links
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
-
-/* app.get("/", (req, res) => {
-  res.send("Hello!");
-}); */
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -38,10 +34,6 @@ app.listen(PORT, () => {
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.get("/urls", (req, res) => {
@@ -139,4 +131,16 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   res.clearCookie('username');
   res.redirect("/urls");
+});
+
+//Returns the  CREATE REGISTRATION PAGE template we created
+app.get("/register", (req, res) => {
+  res.render("register");
+});
+
+app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  console.log("Received email:", email);
+  console.log("Received email:", password);
 });
