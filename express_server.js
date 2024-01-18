@@ -141,6 +141,6 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  console.log("Received email:", email);
-  console.log("Received email:", password);
+  //console.log("Received email:", email);
+  //console.log("Received email:", password);
 });
