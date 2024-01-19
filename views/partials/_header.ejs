@@ -22,7 +22,7 @@
 
       <div class="navbar-nav ms-auto">
         <!-- The Login Form -->
-        <% if (!username) { %>
+        <% if (!user) { %>
          
         <form class="d-flex" action="/login" method="post" role="search">
           <input class="form-control me-2" type="search" placeholder="Username" aria-label="username" name="username">
@@ -30,12 +30,13 @@
         </form>
         <% } %>
 
-        <% if (username) { %>
-          <h2>You are logged in as <%= username %></h2>
+        <% if (user) { %>
+          <h2>You are logged in as <%= user.email %></h2>
           <form class="d-flex" action="/logout" method="post" role="search">
             <button class="btn btn-outline-light my-2 my-sm-0" type="submit">Logout</button>
           </form>
         <% } %>
+        
       </div>
     </div>
   </nav>
