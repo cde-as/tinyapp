@@ -18,7 +18,8 @@ const generateRandomString = (length) => {
   }
   return result;
 };
-// Using the function to generate a random string of length 6
+
+// Using generateRandomString function to generate a random string of length 6
 const randomString = generateRandomString(6);
 console.log(randomString);
 
@@ -27,6 +28,7 @@ const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -133,7 +135,21 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
-//Returns the  CREATE REGISTRATION PAGE template we created
+// Our database of users
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "123",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "456",
+  },
+};
+
+// Returns the  CREATE REGISTRATION PAGE template we created
 app.get("/register", (req, res) => {
   res.render("register");
 });
@@ -141,6 +157,30 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  //console.log("Received email:", email);
-  //console.log("Received email:", password);
+  const id = generateRandomString(6);
+ 
+  if (!email || !password) {
+    return res.status(400).send("Please provide an email and a password");
+  }
+
+  let foundUser;
+  for (const userID in users) {
+    const user = users[userID];
+    if (user.email === email) {
+      foundUser = user;
+    }
+  }
+  if (foundUser) {
+    return res.status(400).send("A user with that email already exists");
+  }
+ 
+  const newUser = {
+    id,
+    email,
+    password
+  };
+  users[id] = newUser;
+  console.log(newUser);
+  console.log(users);
+  res.redirect('/urls');
 });
