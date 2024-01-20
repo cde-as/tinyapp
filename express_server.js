@@ -7,16 +7,16 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Our database of users
+//------------------Our database of users--------------------
 const users = {
   userRandomID: {
     id: "userRandomID",
-    email: "user@example.com",
+    email: "user@mail.com",
     password: "123",
   },
   user2RandomID: {
     id: "user2RandomID",
-    email: "user2@example.com",
+    email: "user2@mail.com",
     password: "456",
   },
 };
@@ -45,10 +45,6 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-/* app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-}); */
-
 app.get("/urls", (req, res) => {
   const userId = req.cookies['user_id'];
   const user = users[userId];
@@ -61,6 +57,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+// When we click: Create New URL
 app.get("/urls/new", (req, res) => {
   const userId = req.cookies['user_id'];
   const user = users[userId];
@@ -69,7 +66,6 @@ app.get("/urls/new", (req, res) => {
     urls: urlDatabase,
     user: user,
   };
- 
   res.render("urls_new", templateVars);
 });
 
@@ -105,7 +101,7 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-//Delete URLs using delete button
+//Delete URLs using DELETE button
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
 
@@ -117,7 +113,7 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 });
 
-//Edit URLs using edit button
+//Edit URLs using EDIT button
 app.post("/urls/:id/edit", (req, res) => {
   const userId = req.cookies['user_id'];
   const user = users[userId];
@@ -153,12 +149,21 @@ app.get("/urls/:id/edit", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  res.render("login");
+  const userId = req.cookies['user_id'];
+  const user = users[userId];
+
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    user: user
+  };
+  res.render("login", templateVars);
 });
 
 app.post("/login", (req, res) => {
   const email = req.body.email;
   let foundUser;
+
   for (const userID in users) {
     const user = users[userID];
     if (user.email === email) {
@@ -167,30 +172,39 @@ app.post("/login", (req, res) => {
     }
   }
   if (!foundUser) {
-    return res.status(400).send("invalid email or password");
+    return res.status(403).send("Invalid email or password");
   }
+  
   res.cookie('user_id', foundUser.id);
-  //redirect to /urls page.
   res.redirect("/urls");
 });
 
+//When we click logout, it will clear the user ID cookie and return user to login page
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
-  res.redirect("/urls");
+  res.clearCookie("user_id");
+  res.redirect("/login");
 });
 
 // Returns the  CREATE REGISTRATION PAGE template we created
 app.get("/register", (req, res) => {
-  res.render("register");
+  const userId = req.cookies['user_id'];
+  const user = users[userId];
+
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    user: user
+  };
+  res.render("register", templateVars);
 });
 
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
   const id = generateRandomString(6);
 
   if (!email || !password) {
+    console.log(users);
     return res.status(400).send("Please provide an email and a password");
   }
 
@@ -202,6 +216,7 @@ app.post("/register", (req, res) => {
     }
   }
   if (foundUser) {
+    console.log(users);
     return res.status(400).send("A user with that email already exists");
   }
 
@@ -211,8 +226,8 @@ app.post("/register", (req, res) => {
     password,
   };
   users[id] = newUser;
-  console.log(newUser);
   console.log(users);
+  
 
   res.cookie("user_id", id);
   res.redirect("/urls");

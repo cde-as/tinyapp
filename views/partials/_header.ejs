@@ -20,18 +20,40 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
 
+      <div class="navbar-nav">
+        <a class="nav-item nav-link" href="/login">Login</a>
+        <a class="nav-item nav-link" href="/register">Register</a>
+      </div>
+
       <div class="navbar-nav ms-auto">
         <!-- The Login Form -->
-        <% if (!user) { %>
+  <!--       <% if (!user) { %>
          
-        <form class="d-flex" action="/login" method="post" role="search">
-          <input class="form-control me-2" type="search" placeholder="Email" aria-label="email" name="email">
-          <button class="btn btn-outline-light my-2 my-sm-0" type="submit">Login</button>
+        <form 
+        class="d-flex" 
+        action="/login" 
+        method="post" 
+        role="search">
+
+          <input 
+          class="form-control me-2" 
+          type="search" 
+          placeholder="Email" 
+          aria-label="email" 
+          name="email">
+
+          <button 
+          class="btn btn-outline-light my-2 my-sm-0" 
+          type="submit">Login</button>
+
         </form>
-        <% } %>
+        <% } %> -->
 
         <% if (user) { %>
-          <h2>You are logged in as <%= user.email %></h2>
+          <div class="navbar-nav navbar-brand navbar-dark">
+          <a class="nav-item text-dark">You are logged in as <%= user.email %></a>
+          </div>
+
           <form class="d-flex" action="/logout" method="post" role="search">
             <button class="btn btn-outline-light my-2 my-sm-0" type="submit">Logout</button>
           </form>
