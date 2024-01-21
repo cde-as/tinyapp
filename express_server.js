@@ -169,25 +169,16 @@ app.post("/login", (req, res) => {
   //Ensures that the email matches one from our database
   for (const userID in users) {
     const user = users[userID];
-    if (user.email === email) {
+    if (user.email === email && user.password === password) {
+      correctPassword = user;
       foundUser = user;
       break;
     }
   }
-  if (!foundUser) {
+  if (!foundUser || !correctPassword) {
     return res.status(403).send("Invalid email or password");
   }
-  
-  for (const userID in users) {
-    const user = users[userID];
-    if (user.password === password) {
-      correctPassword = user;
-      break;
-    }
-  }
-  if (!correctPassword) {
-    return res.status(403).send("Invalid email or password");
-  }
+ 
   res.cookie('user_id', foundUser.id);
   res.redirect("/urls");
 });
@@ -242,7 +233,6 @@ app.post("/register", (req, res) => {
   users[id] = newUser;
   console.log("Added new user into database: ", users);
   
-
   res.cookie("user_id", id);
   res.redirect("/urls");
 });
