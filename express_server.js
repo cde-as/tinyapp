@@ -162,8 +162,11 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   const email = req.body.email;
+  const password = req.body.password;
   let foundUser;
+  let correctPassword;
 
+  //Ensures that the email matches one from our database
   for (const userID in users) {
     const user = users[userID];
     if (user.email === email) {
@@ -175,6 +178,16 @@ app.post("/login", (req, res) => {
     return res.status(403).send("Invalid email or password");
   }
   
+  for (const userID in users) {
+    const user = users[userID];
+    if (user.password === password) {
+      correctPassword = user;
+      break;
+    }
+  }
+  if (!correctPassword) {
+    return res.status(403).send("Invalid email or password");
+  }
   res.cookie('user_id', foundUser.id);
   res.redirect("/urls");
 });
@@ -182,6 +195,7 @@ app.post("/login", (req, res) => {
 //When we click logout, it will clear the user ID cookie and return user to login page
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
+  console.log("Logged out. Current users in database: ", users);
   res.redirect("/login");
 });
 
@@ -205,7 +219,7 @@ app.post("/register", (req, res) => {
 
   if (!email || !password) {
     console.log(users);
-    return res.status(400).send("Please provide an email and a password");
+    return res.status(403).send("Please provide an email and a password");
   }
 
   let foundUser;
@@ -217,7 +231,7 @@ app.post("/register", (req, res) => {
   }
   if (foundUser) {
     console.log(users);
-    return res.status(400).send("A user with that email already exists");
+    return res.status(403).send("A user with that email already exists");
   }
 
   const newUser = {
@@ -226,7 +240,7 @@ app.post("/register", (req, res) => {
     password,
   };
   users[id] = newUser;
-  console.log(users);
+  console.log("Added new user into database: ", users);
   
 
   res.cookie("user_id", id);
