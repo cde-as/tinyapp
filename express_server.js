@@ -39,13 +39,14 @@ const generateRandomString = (length) => {
 
 // Uses the generateRandomString function to generate a random string length 6
 const randomString = generateRandomString(6);
-console.log(randomString);
+randomString;
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
 app.get("/urls", (req, res) => {
+
   const userId = req.cookies['user_id'];
   const user = users[userId];
 
@@ -53,12 +54,32 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase,
     user: user,
   };
-  console.log(user); //********** returning Undefined********/
+  console.log("User: ", user); //********** returning Undefined********/
   res.render("urls_index", templateVars);
 });
 
-// When we click: Create New URL
+app.post("/urls", (req, res) => {
+  // Checks if the user is already logged in
+  // Only registered users can shorten URLs.
+  if (!req.cookies['user_id']) {
+    return res.status(403).send("Please login to shorten URLs.");
+  } else {
+    const longURL = req.body.longURL;
+    const shortURL = generateRandomString(6);
+    // Add the new URL entry to the database
+    urlDatabase[shortURL] = longURL;
+    res.redirect(`/urls/${shortURL}`);
+  }
+});
+
+// When we click: CREATE NEW URL
+// (Only registered & logged in user can create tiny URLs.)
+
 app.get("/urls/new", (req, res) => {
+  // Checks if the user is already logged in, only registered users can shorten URLs.
+  if (!req.cookies['user_id']) {
+    res.redirect('/login');
+  }
   const userId = req.cookies['user_id'];
   const user = users[userId];
 
@@ -81,28 +102,28 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  const longURL = req.body.longURL;
-  const shortURL = generateRandomString(6);
-  // Add the new URL entry to the database
-  urlDatabase[shortURL] = longURL;
-  //redirect after form submission
-  res.redirect(`/urls/${shortURL}`);
-});
 
 //Redirect Short URLs
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
+  
   if (longURL) {
     res.redirect(longURL);
   } else {
-    res.status(404).send("URL not found"); // Handle the case where the short URL is not in the database
+    res.status(404).send(
+    // Implement a relevant HTML error message if the id does not exist at GET /u/:id.
+    // Handle the case where the short URL is not in the database
+      "<html><head><title>Error</title></head><body><h1>Error</h1><p>URL Not Found</p></body></html>");
   }
 });
 
 //Delete URLs using DELETE button
 app.post("/urls/:id/delete", (req, res) => {
+  if (!req.cookies['user_id']) {
+    return res.status(403).send("Please login to delete URLs.");
+  }
+
   const shortURL = req.params.id;
 
   if (urlDatabase[shortURL]) {
@@ -115,6 +136,9 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //Edit URLs using EDIT button
 app.post("/urls/:id/edit", (req, res) => {
+  if (!req.cookies['user_id']) {
+    return res.status(403).send("Please login to edit URLs.");
+  }
   const userId = req.cookies['user_id'];
   const user = users[userId];
 
@@ -137,6 +161,9 @@ app.post("/urls/:id/edit", (req, res) => {
 });
 
 app.get("/urls/:id/edit", (req, res) => {
+  if (!req.cookies['user_id']) {
+    return res.status(403).send("Please login to edit URLs.");
+  }
   const userId = req.cookies['user_id'];
   const user = users[userId];
 
@@ -149,6 +176,11 @@ app.get("/urls/:id/edit", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
+  // Checks if the user is already logged in
+  if (req.cookies['user_id']) {
+    return res.redirect("/urls");
+  }
+
   const userId = req.cookies['user_id'];
   const user = users[userId];
 
@@ -192,6 +224,11 @@ app.post("/logout", (req, res) => {
 
 // Returns the  CREATE REGISTRATION PAGE template we created
 app.get("/register", (req, res) => {
+  // Checks if the user is already logged in
+  if (req.cookies['user_id']) {
+    return res.redirect("/urls");
+  }
+
   const userId = req.cookies['user_id'];
   const user = users[userId];
 
