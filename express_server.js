@@ -22,8 +22,14 @@ const users = {
 };
 // -----------------Our database of links-------------------
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b2xVn2: {
+    longURL:"http://www.lighthouselabs.ca",
+    userID: "userRandomID"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "user2RandomID",
+  }
 };
 
 // Creates our short URL string
@@ -45,29 +51,62 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-app.get("/urls", (req, res) => {
+// Returns the URLs where the userID is equal to the id of the currently logged-in user.
+const urlsForUser = (id) => {
+  
 
+};
+app.get("/urls", (req, res) => {
   const userId = req.cookies['user_id'];
   const user = users[userId];
+
+  //Checks if user is logged in, if not will send error message
+  if (!user) {
+    return res.status(403).send("<html><head><title>Error</title></head><body><h1>Error</h1><p>Please log in or register first.</p></body></html>");
+  }
+  
+  //Filter urlDatabase so that only the user logged in will see the URLs they made.
+  const userURLs = {};
+  //For every short URL in our database, does it belong to our logged in user
+  for (const shortURL in urlDatabase) {
+    //in our urlDatabase object access the user ID, if it matches the user currently logged on then show their URL.
+    if (urlDatabase[shortURL].userID === userId) {
+      userURLs[shortURL] = urlDatabase[shortURL];
+    }
+  }
 
   const templateVars = {
     urls: urlDatabase,
     user: user,
   };
-  console.log("User: ", user); //********** returning Undefined********/
+
   res.render("urls_index", templateVars);
 });
 
+//How to add a new URL to the database
 app.post("/urls", (req, res) => {
   // Checks if the user is already logged in
   // Only registered users can shorten URLs.
   if (!req.cookies['user_id']) {
     return res.status(403).send("Please login to shorten URLs.");
   } else {
+    const userId = req.cookies['user_id'];
+    const user = users[userId];
+
     const longURL = req.body.longURL;
     const shortURL = generateRandomString(6);
-    // Add the new URL entry to the database
-    urlDatabase[shortURL] = longURL;
+
+    // Updated - How to add a new URL entry to the database
+    urlDatabase[shortURL] = {
+      longURL: longURL,
+      userID: user[userId],
+    };
+
+    const templateVars = {
+      urls: urlDatabase,
+      user: user,
+    };
+    res.render("urls_new", templateVars);
     res.redirect(`/urls/${shortURL}`);
   }
 });
@@ -80,6 +119,7 @@ app.get("/urls/new", (req, res) => {
   if (!req.cookies['user_id']) {
     res.redirect('/login');
   }
+  // user info
   const userId = req.cookies['user_id'];
   const user = users[userId];
 
@@ -90,13 +130,14 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+//refactor so that we are accessing longURL by adding .longURL
 app.get("/urls/:id", (req, res) => {
   const userId = req.cookies['user_id'];
   const user = users[userId];
 
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     user: user,
   };
   res.render("urls_show", templateVars);
@@ -106,7 +147,7 @@ app.get("/urls/:id", (req, res) => {
 //Redirect Short URLs
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   
   if (longURL) {
     res.redirect(longURL);
@@ -123,9 +164,14 @@ app.post("/urls/:id/delete", (req, res) => {
   if (!req.cookies['user_id']) {
     return res.status(403).send("Please login to delete URLs.");
   }
-
+  
   const shortURL = req.params.id;
-
+  if (!shortURL) {
+    res.status(404).send(
+      // Implement a relevant HTML error message if the id does not exist at GET /u/:id.
+      // Handle the case where the short URL is not in the database
+      "<html><head><title>Error</title></head><body><h1>Error</h1><p>ID Does Not Exist</p></body></html>");
+  }
   if (urlDatabase[shortURL]) {
     delete urlDatabase[shortURL];
     res.redirect(`/urls`);
