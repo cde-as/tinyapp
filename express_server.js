@@ -2,6 +2,7 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 8080; // default port
+const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -222,17 +223,17 @@ app.post("/urls/:id/edit", (req, res) => {
 
   if (urlDatabase[shortURL]) {
     //Update the long URL in the database
-    urlDatabase[shortURL] = newLongURL;
+    urlDatabase[shortURL].longURL = newLongURL;
     res.redirect(`/urls/${shortURL}`);
   } else {
     res.status(404).send("URL not found");
   }
-  const templateVars = {
+  /*  const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
     user: user,
   };
-  res.render("urls_show", templateVars); //************************** */
+  res.render("urls_show", templateVars); */
 });
 
 app.get("/urls/:id/edit", (req, res) => {
@@ -270,19 +271,24 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  let foundUser;
-  let correctPassword;
 
-  //Ensures that the email matches one from our database
+  let foundUser;
+  console.log("Email:", email);
+  console.log("Password:", password);
+  console.log("Stored hashed password:", users["userRandomID"].hashedPassword);
+  //Ensures the email matches one from our database, and use bcrypt to check the password
   for (const userID in users) {
     const user = users[userID];
-    if (user.email === email && user.password === password) {
-      correctPassword = user;
+    console.log("Checking user:", user);
+    console.log("Stored hashed pass", user.hashedPassword);
+
+    if (user.email === email && bcrypt.compareSync(password, user.hashedPassword)) {
       foundUser = user;
       break;
     }
   }
-  if (!foundUser || !correctPassword) {
+
+  if (!foundUser) {
     return res.status(403).send("Invalid email or password");
   }
 
@@ -318,6 +324,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const id = generateRandomString(6);
 
   if (!email || !password) {
@@ -340,7 +347,7 @@ app.post("/register", (req, res) => {
   const newUser = {
     id,
     email,
-    password,
+    hashedPassword,
   };
   users[id] = newUser;
   console.log("Added new user into database: ", users);
