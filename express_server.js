@@ -273,15 +273,10 @@ app.post("/login", (req, res) => {
   const password = req.body.password;
 
   let foundUser;
-  console.log("Email:", email);
-  console.log("Password:", password);
-  console.log("Stored hashed password:", users["userRandomID"].hashedPassword);
+  
   //Ensures the email matches one from our database, and use bcrypt to check the password
   for (const userID in users) {
     const user = users[userID];
-    console.log("Checking user:", user);
-    console.log("Stored hashed pass", user.hashedPassword);
-
     if (user.email === email && bcrypt.compareSync(password, user.hashedPassword)) {
       foundUser = user;
       break;
