@@ -121,8 +121,8 @@ app.post("/urls", (req, res) => {
       urls: urlDatabase,
       user: userId,
     };
-    res.render("urls_new", templateVars);
-    //res.redirect(`/urls/${shortURL}`);
+    //res.render("urls_new", templateVars);
+    res.redirect(`/urls/${shortURL}`);
   }
 });
 
@@ -196,10 +196,6 @@ app.get("/u/:id", (req, res) => {
 // POST URL DELETE
 app.post("/urls/:id/delete", (req, res) => {
   //Delete URLs using DELETE button
-  if (!req.session.userId) {
-    return res.status(403).send("Please login to delete URLs.");
-  }
-
   const shortURL = req.params.id;
   if (!shortURL) {
     res.status(404).send(
@@ -207,6 +203,10 @@ app.post("/urls/:id/delete", (req, res) => {
       // Handle the case where the short URL is not in the database
       "<html><head> <title>Error</title> </head> <body> <h1>Error</h1> <p>ID Does Not Exist</p> </body></html>"
     );
+  }
+  
+  if (!req.session.userId) {
+    return res.status(403).send("Please login to delete URLs.");
   }
   if (urlDatabase[shortURL]) {
     delete urlDatabase[shortURL];
