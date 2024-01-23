@@ -1,12 +1,21 @@
 const express = require("express");
-const cookieParser = require("cookie-parser");
+const helpers = require("./helpers"); // Require the helpers module
+const cookieSession = require("cookie-session");
 const app = express();
 const PORT = 8080; // default port
 const bcrypt = require("bcryptjs");
-
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['chris-secret-word'],
+
+  maxAge: 24 * 60 * 60 * 1000 // Expiration: 24 hours
+}));
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
 
 //------------------Our database of users--------------------
 const users = {
@@ -48,12 +57,8 @@ const generateRandomString = (length) => {
 const randomString = generateRandomString(6);
 randomString;
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
-
-// Returns the URLs where the userID is equal to the id of the currently logged-in user.
 const urlsForUser = (id) => {
+  // Returns the URLs where the userID is equal to the id of the currently logged-in user.
   if (!id || !users[id]) {
     return;
   }
@@ -70,7 +75,7 @@ const urlsForUser = (id) => {
 };
 
 app.get("/urls", (req, res) => {
-  const userId = req.cookies["user_id"];
+  const userId = req.session.userId;
   const user = users[userId];
 
   //Checks if user is not logged in. If not, will send error message
@@ -93,14 +98,14 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-//How to add a new URL to the database
 app.post("/urls", (req, res) => {
+  //For adding a new URL to the database
   // Checks if the user is already logged in
   // Only registered users can shorten URLs.
-  if (!req.cookies["user_id"]) {
+  if (!req.session.userId) {
     return res.status(403).send("Please login to shorten URLs.");
   } else {
-    const userId = req.cookies["user_id"];
+    const userId = req.session.userId;
     //const user = userId;
 
     const longURL = req.body.longURL;
@@ -121,16 +126,15 @@ app.post("/urls", (req, res) => {
   }
 });
 
-// When we click: CREATE NEW URL
-// (Only registered & logged in user can create tiny URLs.)
 
 app.get("/urls/new", (req, res) => {
+  // When we click: CREATE NEW URL
   // Checks if the user is already logged in, only registered users can shorten URLs.
-  if (!req.cookies["user_id"]) {
+  if (!req.session.userId) {
     res.redirect("/login");
   }
   // user info
-  const userId = req.cookies["user_id"];
+  const userId = req.session.userId;
   const user = users[userId];
 
   const templateVars = {
@@ -140,9 +144,9 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-//refactor so that we are accessing longURL by adding .longURL
+
 app.get("/urls/:id", (req, res) => {
-  const userId = req.cookies["user_id"];
+  const userId = req.session.userId;
   const user = users[userId];
   const shortURL = req.params.id;
 
@@ -165,15 +169,16 @@ app.get("/urls/:id", (req, res) => {
 
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[shortURL].longURL,
+    longURL: urlDatabase[req.params.id].longURL, //refactored so that we are accessing longURL by adding .longURL
     user: user,
   };
   res.render("urls_show", templateVars);
 });
 
-//Redirect Short URLs
+// GET / U:ID
 app.get("/u/:id", (req, res) => {
-  //const userId = req.cookies['user_id'];
+  //Redirect to Short URLs
+  //const userId = req.cookies['userId'];
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL].longURL;
 
@@ -188,9 +193,10 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-//Delete URLs using DELETE button
+// POST URL DELETE
 app.post("/urls/:id/delete", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  //Delete URLs using DELETE button
+  if (!req.session.userId) {
     return res.status(403).send("Please login to delete URLs.");
   }
 
@@ -210,12 +216,14 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 });
 
-//Edit URLs using EDIT button
+//POST / URLS EDIT
 app.post("/urls/:id/edit", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  //Edit URLs using EDIT button
+  if (!req.session.userId) {
+    //Checks if there is a user session
     return res.status(403).send("Please login to edit URLs.");
   }
-  const userId = req.cookies["user_id"];
+  const userId = req.session.userId;
   const user = users[userId];
 
   const shortURL = req.params.id;
@@ -228,19 +236,13 @@ app.post("/urls/:id/edit", (req, res) => {
   } else {
     res.status(404).send("URL not found");
   }
-  /*  const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    user: user,
-  };
-  res.render("urls_show", templateVars); */
 });
 
 app.get("/urls/:id/edit", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (!req.session.userId) {
     return res.status(403).send("Please login to edit URLs.");
   }
-  const userId = req.cookies["user_id"];
+  const userId = req.session.userId;
   const user = users[userId];
 
   const templateVars = {
@@ -251,13 +253,14 @@ app.get("/urls/:id/edit", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// GET / Login
 app.get("/login", (req, res) => {
   // Checks if the user is already logged in
-  if (req.cookies["user_id"]) {
+  if (req.session.userId) {
     return res.redirect("/urls");
   }
 
-  const userId = req.cookies["user_id"];
+  const userId = req.session.userId;
   const user = users[userId];
 
   const templateVars = {
@@ -272,54 +275,47 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
-  let foundUser;
-  
-  //Ensures the email matches one from our database, and use bcrypt to check the password
-  for (const userID in users) {
-    const user = users[userID];
-    if (user.email === email && bcrypt.compareSync(password, user.hashedPassword)) {
-      foundUser = user;
-      break;
-    }
-  }
-
-  if (!foundUser) {
+  //Ensures the email matches one from our database,
+  const foundUser = helpers.getUserByEmail(email, users);
+   
+  if (!foundUser || !bcrypt.compareSync(password, foundUser.hashedPassword)) {
+    console.log("Invalid login attempt");
     return res.status(403).send("Invalid email or password");
   }
+  console.log("Login successful. User ID:", foundUser.id);
 
-  res.cookie("user_id", foundUser.id);
+  req.session.userId = foundUser.id; //update to cookie session
   res.redirect("/urls");
 });
 
-//When we click logout, it will clear the user ID cookie and return user to login page
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  //When we click logout, it will clear the user ID cookie and return user to login page
+  req.session.userId = null; //Clear the userId from the session
   console.log("Logged out. Current users in database: ", users);
   res.redirect("/login");
 });
 
-// Returns the  CREATE REGISTRATION PAGE template we created
+// GET / REGISTER
 app.get("/register", (req, res) => {
+  // Returns the  CREATE REGISTRATION PAGE template we created
+ 
   // Checks if the user is already logged in
-  if (req.cookies["user_id"]) {
+  if (req.session.userId) {
     return res.redirect("/urls");
   }
 
-  const userId = req.cookies["user_id"];
-  const user = users[userId];
-
   const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    user: user,
+    user: null,
   };
   res.render("register", templateVars);
 });
 
+// POST / REGISTER
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
+  console.log("hashed pass: ", hashedPassword);
   const id = generateRandomString(6);
 
   if (!email || !password) {
@@ -327,13 +323,8 @@ app.post("/register", (req, res) => {
     return res.status(403).send("Please provide an email and a password");
   }
 
-  let foundUser;
-  for (const userID in users) {
-    const user = users[userID];
-    if (user.email === email) {
-      foundUser = user;
-    }
-  }
+  const foundUser = helpers.getUserByEmail(email, users);
+
   if (foundUser) {
     console.log(users);
     return res.status(403).send("A user with that email already exists");
@@ -346,7 +337,9 @@ app.post("/register", (req, res) => {
   };
   users[id] = newUser;
   console.log("Added new user into database: ", users);
+ 
 
-  res.cookie("user_id", id);
+  req.session.userId = id; //set userId in the session
+  console.log(req.session);
   res.redirect("/urls");
 });
