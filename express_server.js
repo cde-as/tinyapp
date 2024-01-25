@@ -179,6 +179,11 @@ app.get("/u/:id", (req, res) => {
   //Redirect to Short URLs
   const shortURL = req.params.id;
 
+  // CHECKED IF LOGGED IN.
+  if (!req.session.userId) {
+    return res.status(403).send("Please login to delete URLs.");
+  }
+  //If short URL exists in database, if it does get the associated longURL and ensure http is included.
   if (urlDatabase[shortURL]) {
     let longURL = urlDatabase[shortURL].longURL;
 
@@ -206,30 +211,50 @@ app.post("/urls/:id/delete", (req, res) => {
       "<html><head> <title>Error</title> </head> <body> <h1>Error</h1> <p>ID Does Not Exist</p> </body></html>"
     );
   }
-  
+ 
+  // CHECKED IF LOGGED IN.
   if (!req.session.userId) {
     return res.status(403).send("Please login to delete URLs.");
   }
-  if (urlDatabase[shortURL]) {
-    delete urlDatabase[shortURL];
-    res.redirect(`/urls`);
-  } else {
-    res.status(404).send("URL not found");
+
+  // CHECKS IF THE URL EXISTS IN DATABASE.
+  if (!urlDatabase[shortURL]) {
+    return res.status(404).send("URL not found");
   }
+
+  // CHECKS IF USER OWNS THE URL
+  if (urlDatabase[shortURL].userId !== req.session.userId) {
+    return res.status(403).send("You are not the owner of this URL.");
+  }
+
+  //THEN DELETE THE URL
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
+
 });
 
 //POST / URLS EDIT
 app.post("/urls/:id/edit", (req, res) => {
   //Edit URLs using EDIT button
-  if (!req.session.userId) {
-    //Checks if there is a user session
-    return res.status(403).send("Please login to edit URLs.");
-  }
   const userId = req.session.userId;
   const user = users[userId];
 
   const shortURL = req.params.id;
   const newLongURL = req.body.newLongURL;
+  
+  if (!req.session.userId) {
+    //Checks if there is a user session
+    return res.status(403).send("Please login to edit URLs.");
+  }
+  // CHECKS IF THE URL EXISTS IN DATABASE.
+  if (!urlDatabase[shortURL]) {
+    return res.status(404).send("URL not found");
+  }
+
+  // CHECKS IF USER OWNS THE URL
+  if (urlDatabase[shortURL].userId !== req.session.userId) {
+    return res.status(403).send("You are not the owner of this URL.");
+  }
 
   if (urlDatabase[shortURL]) {
     //Update the long URL in the database
