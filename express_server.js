@@ -56,7 +56,7 @@ const urlsForUser = (id) => {
 };
 
 app.get("/", (req, res) => {
-  const userId = req.ression.userId;
+  const userId = req.session.userId;
   
   if (userId) {
   //If the user is logged in redirect to /urls
@@ -177,19 +177,18 @@ app.get("/urls/:id", (req, res) => {
 // GET / U:ID
 app.get("/u/:id", (req, res) => {
   //Redirect to Short URLs
-  //const userId = req.cookies['userId'];
   const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL].longURL;
 
+  if (urlDatabase[shortURL]) {
+    let longURL = urlDatabase[shortURL].longURL;
 
-
-  if (longURL) {
+    if (!/^https?:\/\//i.test(longURL)) {
+      longURL = "http://" + longURL;
+    }
     res.redirect(longURL);
   } else {
     res.status(404).send(
-      // Implement a relevant HTML error message if the id does not exist at GET /u/:id.
-      // Handle the case where the short URL is not in the database
-      "<html><head> <title>Error</title> </head> <body> <h1>Error</h1> <p>URL Not Found</p> </body></html>"
+      "<html><head><title> Error </title></head> <body> <h1>Error</h1> <p> URL Not Found </p> </body></html>"
     );
   }
 });
@@ -198,6 +197,7 @@ app.get("/u/:id", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   //Delete URLs using DELETE button
   const shortURL = req.params.id;
+  
 
   if (!shortURL) {
     res.status(404).send(
