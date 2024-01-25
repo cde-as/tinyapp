@@ -13,10 +13,6 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000 // Expiration: 24 hours
 }));
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
-
 //------------------Our database of users--------------------
 const users = {
   userRandomID: {
@@ -42,21 +38,6 @@ const urlDatabase = {
   },
 };
 
-// Creates our short URL string
-const generateRandomString = (length) => {
-  let result = "";
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-};
-
-// Uses the generateRandomString function to generate a random string length 6
-const randomString = generateRandomString(6);
-randomString;
-
 const urlsForUser = (id) => {
   // Returns the URLs where the userID is equal to the id of the currently logged-in user.
   if (!id || !users[id]) {
@@ -73,6 +54,18 @@ const urlsForUser = (id) => {
   }
   return userURLs;
 };
+
+app.get("/", (req, res) => {
+  const userId = req.ression.userId;
+  
+  if (userId) {
+  //If the user is logged in redirect to /urls
+    res.redirect("/urls");
+  } else {
+  // If the user is not logged in redirect to /login
+    res.redirect("/login");
+  }
+});
 
 app.get("/urls", (req, res) => {
   const userId = req.session.userId;
@@ -94,7 +87,6 @@ app.get("/urls", (req, res) => {
     urls: userURLs,
     user: user,
   };
-
   res.render("urls_index", templateVars);
 });
 
@@ -109,7 +101,7 @@ app.post("/urls", (req, res) => {
     //const user = userId;
 
     const longURL = req.body.longURL;
-    const shortURL = generateRandomString(6);
+    const shortURL = helpers.generateRandomString(6);
 
     // Updated - How to add a new URL entry to the database
     urlDatabase[shortURL] = {
@@ -117,10 +109,10 @@ app.post("/urls", (req, res) => {
       userID: userId,
     };
 
-    const templateVars = {
+    /*  const templateVars = {
       urls: urlDatabase,
       user: userId,
-    };
+    }; */
     //res.render("urls_new", templateVars);
     res.redirect(`/urls/${shortURL}`);
   }
@@ -166,6 +158,13 @@ app.get("/urls/:id", (req, res) => {
         "<html> <head> <title>Error</title> </head><body> <h1>Error</h1> <p> You do not own this URL. </p></body></html>"
       );
   }
+  //If the URL does not exist
+  if (!urlDatabase[shortURL]) {
+    return res
+      .status(404)
+      .send("<html> <head> <title>Error</title> </head><body> <h1>Error</h1> <p> This URL does not exist. </p></body></html>");
+  }
+  
 
   const templateVars = {
     id: req.params.id,
@@ -182,6 +181,8 @@ app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL].longURL;
 
+
+
   if (longURL) {
     res.redirect(longURL);
   } else {
@@ -197,6 +198,7 @@ app.get("/u/:id", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   //Delete URLs using DELETE button
   const shortURL = req.params.id;
+
   if (!shortURL) {
     res.status(404).send(
       // Implement a relevant HTML error message if the id does not exist at GET /u/:id.
@@ -232,7 +234,7 @@ app.post("/urls/:id/edit", (req, res) => {
   if (urlDatabase[shortURL]) {
     //Update the long URL in the database
     urlDatabase[shortURL].longURL = newLongURL;
-    res.redirect(`/urls/${shortURL}`);
+    res.redirect(`/urls`);
   } else {
     res.status(404).send("URL not found");
   }
@@ -290,7 +292,7 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   //When we click logout, it will clear the user ID cookie and return user to login page
-  req.session.userId = null; //Clear the userId from the session
+  req.session = null; //Clear the session cookie
   console.log("Logged out. Current users in database: ", users);
   res.redirect("/login");
 });
@@ -298,7 +300,6 @@ app.post("/logout", (req, res) => {
 // GET / REGISTER
 app.get("/register", (req, res) => {
   // Returns the  CREATE REGISTRATION PAGE template we created
- 
   // Checks if the user is already logged in
   if (req.session.userId) {
     return res.redirect("/urls");
@@ -316,7 +317,7 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
   console.log("hashed pass: ", hashedPassword);
-  const id = generateRandomString(6);
+  const id = helpers.generateRandomString(6);
 
   if (!email || !password) {
     console.log(users);
@@ -340,6 +341,9 @@ app.post("/register", (req, res) => {
  
 
   req.session.userId = id; //set userId in the session
-  console.log(req.session);
   res.redirect("/urls");
+});
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
