@@ -223,7 +223,7 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 
   // CHECKS IF USER OWNS THE URL
-  if (urlDatabase[shortURL].userId !== req.session.userId) {
+  if (urlDatabase[shortURL].userID !== req.session.userId) {
     return res.status(403).send("You are not the owner of this URL.");
   }
 
@@ -252,7 +252,7 @@ app.post("/urls/:id/edit", (req, res) => {
   }
 
   // CHECKS IF USER OWNS THE URL
-  if (urlDatabase[shortURL].userId !== req.session.userId) {
+  if (urlDatabase[shortURL].userID !== req.session.userId) {
     return res.status(403).send("You are not the owner of this URL.");
   }
 
