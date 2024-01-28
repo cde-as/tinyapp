@@ -235,6 +235,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //POST / URLS EDIT
 app.post("/urls/:id/edit", (req, res) => {
+  console.log(urlDatabase);
   //Edit URLs using EDIT button
   const userId = req.session.userId;
   const user = users[userId];
@@ -259,6 +260,7 @@ app.post("/urls/:id/edit", (req, res) => {
   if (urlDatabase[shortURL]) {
     //Update the long URL in the database
     urlDatabase[shortURL].longURL = newLongURL;
+    console.log(urlDatabase);
     res.redirect(`/urls`);
   } else {
     res.status(404).send("URL not found");
@@ -274,7 +276,7 @@ app.get("/urls/:id/edit", (req, res) => {
 
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     user: user,
   };
   res.render("urls_show", templateVars);
